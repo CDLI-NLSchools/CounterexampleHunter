@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Counterexample Hunter: Math 2201 Unit 7</title>
+<style>
+  :root{
+    --ink:#1c2430; --muted:#5a6572; --accent:#0b5cad; --accent-dark:#084a8a;
+    --ok:#177245; --bad:#b3261e; --card:#ffffff; --bg:#eef2f6; --line:#d4dce4;
+    --soft:#f4f8fc; --warn:#8a5a00;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.45;}
+  .wrap{max-width:779px;margin:0 auto;padding:16px 14px 48px;}
+  header{margin:10px 0 14px;}
+  h1{font-size:1.7rem;margin:0 0 2px;}
+  h2{font-size:1.3rem;margin:0 0 6px;}
+  h3{font-size:1.08rem;margin:14px 0 6px;}
+  .subtitle{color:var(--muted);font-size:1rem;margin:0 0 8px;}
+  .instruction{font-size:1.02rem;margin:0;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:16px;margin:14px 0;box-shadow:0 1px 3px rgba(20,40,60,.06);}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+  .controls .spacer{flex:1;}
+  button{font:inherit;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:#fff;
+    padding:9px 16px;border-radius:8px;min-height:44px;font-weight:600;}
+  button:hover{background:var(--accent-dark);}
+  button.secondary{background:#fff;color:var(--accent);}
+  button.secondary:hover{background:var(--soft);}
+  button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent);}
+  button.secondary[aria-pressed="true"]{background:var(--accent);color:#fff;}
+  button:disabled{opacity:.55;cursor:default;}
+  button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid #f2b01e;outline-offset:2px;}
+  .modebtns{display:flex;flex-wrap:wrap;gap:8px;}
+  .offers{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:12px 0;}
+  .offer{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--soft);}
+  .offer h3{margin:0 0 4px;font-size:1.05rem;}
+  .offer p{margin:4px 0;}
+  .price{font-size:1.25rem;font-weight:700;}
+  .field{display:flex;flex-direction:column;gap:3px;margin:10px 0 0;}
+  .field label{font-size:.88rem;color:var(--muted);font-weight:600;}
+  .field input[type=text],.field input[type=number]{padding:9px 10px;font:inherit;font-size:1.02rem;border:1px solid var(--line);
+    border-radius:8px;min-height:44px;width:100%;background:#fff;}
+  textarea{padding:9px 10px;font:inherit;border:1px solid var(--line);border-radius:8px;width:100%;min-height:84px;background:#fff;}
+  .pickrow{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 0;}
+  .pickopt{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;gap:8px;align-items:center;background:#fff;font-weight:600;}
+  .pickopt input{width:20px;height:20px;}
+  .checkrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0 0;}
+  .feedback{margin:12px 0 0;border-radius:10px;padding:12px 14px;display:none;}
+  .feedback.show{display:block;}
+  .feedback.ok{background:#f2faf5;border:1px solid var(--ok);}
+  .feedback.bad{background:#fdf3f2;border:1px solid var(--bad);}
+  .feedback.info{background:var(--soft);border:1px solid var(--line);}
+  .feedback p{margin:4px 0;}
+  .feedback ul{margin:6px 0;padding-left:20px;}
+  .feedback .sumline{font-weight:700;}
+  .feedback.ok .sumline{color:var(--ok);}
+  .feedback.bad .sumline{color:var(--bad);}
+  table.plan{border-collapse:collapse;width:100%;font-size:.95rem;margin:10px 0;}
+  table.plan th,table.plan td{border:1px solid var(--line);padding:5px 8px;text-align:left;}
+  table.plan th{background:var(--soft);}
+  .hidden{display:none !important;}
+  .reqbox{border:1px solid var(--line);background:var(--soft);border-radius:10px;padding:12px 14px;margin:12px 0;}
+  .reqbox p{margin:4px 0;}
+  .bigprompt{font-size:1.1rem;font-weight:600;}
+  .workline{font-size:1.05rem;background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:10px 12px;}
+  .note{color:var(--muted);font-size:.94rem;}
+  .optlist{display:flex;flex-direction:column;gap:8px;margin:10px 0 0;}
+  .rectgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:12px 0;}
+  #recordSheet{background:#fff;}
+  #recordSheet table{border-collapse:collapse;width:100%;font-size:.95rem;margin:10px 0;}
+  #recordSheet th,#recordSheet td{border:1px solid var(--line);padding:5px 8px;text-align:left;}
+  #recordSheet th{background:var(--soft);}
+  @media (max-width:680px){ h1{font-size:1.4rem;} .offers{grid-template-columns:1fr;} }
+  @media print{
+    body{background:#fff;}
+    .wrap{max-width:none;padding:0;}
+    body *{visibility:hidden;}
+    #recordSheet,#recordSheet *{visibility:visible;}
+    #recordSheet{position:absolute;left:0;top:0;width:100%;border:none;box-shadow:none;margin:0;padding:0;}
+    #recordSheet textarea{border:1px solid #999;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Counterexample Hunter</h1>
+    <p class="subtitle">Math 2201, Unit 7: Inductive and Deductive Reasoning (Indicators 2.4, 2.3)</p>
+    <p class="instruction">This is practice: probe each claim, hunt for the case that breaks it, and say why one case is enough. Nothing is recorded and nothing leaves this page.</p>
+  </header>
+
+  <div class="card controls" role="group" aria-label="Choose a mode">
+    <div class="modebtns">
+      <button type="button" id="modeNumber" aria-pressed="true">1. Number Lab</button>
+      <button type="button" id="modeRect" class="secondary" aria-pressed="false">2. Rectangle Lab</button>
+      <button type="button" id="modeReverse" class="secondary" aria-pressed="false">3. Reverse Mode: Repair a Claim</button>
+    </div>
+  </div>
+
+  <main>
+    <!-- Mode 1: Number Lab -->
+    <section class="card" id="panelNumber" aria-labelledby="nHeading">
+      <h2 id="nHeading">Number Lab</h2>
+      <p>A claim that says "for every" only needs one allowed case where it fails to be shown false. That one case is a counterexample. Test values one at a time. You can type integers, decimals, and simple fractions such as 3/4 or -5/2.</p>
+      <div class="reqbox">
+        <p class="bigprompt" id="nClaim"></p>
+        <p id="nDomain" class="note"></p>
+      </div>
+      <div class="field" style="max-width:320px;">
+        <label for="nInput">Test value</label>
+        <input type="text" inputmode="text" id="nInput" autocomplete="off" placeholder="Try 6, 0, 1/2, or -3">
+      </div>
+      <div class="checkrow">
+        <button type="button" id="nTest">Test this value</button>
+        <button type="button" id="nHint" class="secondary">Give me a hint</button>
+        <button type="button" id="nTrue" class="secondary">I think this claim is true</button>
+        <button type="button" id="nNew" class="secondary">New claim</button>
+      </div>
+      <div class="feedback" id="nHintBox" aria-live="polite"></div>
+      <div class="feedback" id="nFeedback" aria-live="polite"></div>
+      <div id="nLogWrap"></div>
+      <div id="nWhyWrap" class="hidden">
+        <h3>Why is one counterexample enough?</h3>
+        <p>Pick the correct explanation, then write your own explanation in the box.</p>
+        <div class="optlist" id="nWhyOptions"></div>
+        <div class="field">
+          <label for="nExplain">My explanation, in my own words</label>
+          <textarea id="nExplain" placeholder="Example: The claim says this happens for every allowed value. My value is allowed, and the claim fails for it, so the claim cannot be true as stated."></textarea>
+        </div>
+        <div class="checkrow">
+          <button type="button" id="nResolve">Add this find to the record</button>
+        </div>
+      </div>
+      <div id="nReasonWrap" class="hidden">
+        <h3>Why do you think this claim is true?</h3>
+        <p>Pick the general reason that covers every allowed case, not just the values you tried.</p>
+        <div class="optlist" id="nReasonOptions"></div>
+        <div class="checkrow">
+          <button type="button" id="nReasonCheck">Check my verdict</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mode 2: Rectangle Lab -->
+    <section class="card hidden" id="panelRect" aria-labelledby="rHeading">
+      <h2 id="rHeading">Rectangle Lab: Area Versus Perimeter</h2>
+      <p>Build pairs of rectangles and check them against the claim. A pair only tests the claim when the claim condition is met. A pair that meets the condition but breaks the conclusion is a counterexample.</p>
+      <div class="reqbox">
+        <p class="bigprompt" id="rClaim"></p>
+        <p class="note">Lengths and widths are in the same unit. Areas are in square units.</p>
+      </div>
+      <div class="rectgrid">
+        <div class="offer">
+          <h3>Rectangle A</h3>
+          <div class="field"><label for="rLenA">Length of A</label><input type="number" id="rLenA" min="0.5" step="0.5" value="4"></div>
+          <div class="field"><label for="rWidA">Width of A</label><input type="number" id="rWidA" min="0.5" step="0.5" value="3"></div>
+          <p id="rStatsA"></p>
+        </div>
+        <div class="offer">
+          <h3>Rectangle B</h3>
+          <div class="field"><label for="rLenB">Length of B</label><input type="number" id="rLenB" min="0.5" step="0.5" value="6"></div>
+          <div class="field"><label for="rWidB">Width of B</label><input type="number" id="rWidB" min="0.5" step="0.5" value="3"></div>
+          <p id="rStatsB"></p>
+        </div>
+      </div>
+      <div class="checkrow">
+        <button type="button" id="rCheck">Check against the claim</button>
+        <button type="button" id="rHint" class="secondary">Give me a hint</button>
+        <button type="button" id="rTrue" class="secondary">I think this claim is true</button>
+        <button type="button" id="rNew" class="secondary">New claim</button>
+      </div>
+      <div class="feedback" id="rHintBox" aria-live="polite"></div>
+      <div class="feedback" id="rFeedback" aria-live="polite"></div>
+      <div id="rLogWrap"></div>
+      <div id="rWhyWrap" class="hidden">
+        <h3>Why is one counterexample pair enough?</h3>
+        <p>Pick the correct explanation, then write your own explanation in the box.</p>
+        <div class="optlist" id="rWhyOptions"></div>
+        <div class="field">
+          <label for="rExplain">My explanation, in my own words</label>
+          <textarea id="rExplain" placeholder="Example: This pair meets the condition of the claim, but the conclusion does not follow, so the claim cannot be true as stated."></textarea>
+        </div>
+        <div class="checkrow">
+          <button type="button" id="rResolve">Add this find to the record</button>
+        </div>
+      </div>
+      <div id="rReasonWrap" class="hidden">
+        <h3>Why do you think this claim is true?</h3>
+        <p>Pick the general reason that covers every allowed pair, not just the pairs you tried.</p>
+        <div class="optlist" id="rReasonOptions"></div>
+        <div class="checkrow">
+          <button type="button" id="rReasonCheck">Check my verdict</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mode 3: Reverse Mode -->
+    <section class="card hidden" id="panelReverse" aria-labelledby="vHeading">
+      <h2 id="vHeading">Reverse Mode: Repair a Broken Claim</h2>
+      <p>This claim has already been broken. Your job is to fix it: restrict the domain, add a condition, or weaken the conclusion, so the repaired claim actually holds. Pick a repair and the app will test it on a sweep of values, including the value or pair that broke the original.</p>
+      <div class="reqbox">
+        <p class="bigprompt" id="vClaim"></p>
+        <p id="vWitness"></p>
+      </div>
+      <div class="optlist" id="vOptions"></div>
+      <div class="checkrow">
+        <button type="button" id="vVerify">Verify my repair</button>
+        <button type="button" id="vNew" class="secondary">New broken claim</button>
+      </div>
+      <div class="feedback" id="vFeedback" aria-live="polite"></div>
+    </section>
+
+    <!-- Record sheet -->
+    <section class="card" id="recordSheet" aria-labelledby="dsHeading">
+      <h2 id="dsHeading">Counterexample Record</h2>
+      <p class="note">This sheet fills in from the claims you have resolved. Add your own notes, then print it and submit it to the assignment folder if your teacher asks for it. This record is one of the designated portfolio evidence artifacts for this unit, so print it cleanly and keep the copy.</p>
+      <div id="dsBody">
+        <p>No resolved claim yet. Resolve a claim above and your work will appear here.</p>
+      </div>
+      <div class="field">
+        <label for="dsNotes">My notes (what kinds of values or pairs should I try first next time, and why)</label>
+        <textarea id="dsNotes" placeholder="Example: Try zero, negatives, and fractions early. Claims often break at the values that are easy to overlook."></textarea>
+      </div>
+      <div class="checkrow">
+        <button type="button" id="printBtn">Print record sheet</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+"use strict";
+// ==GENERATOR==
+// Pure logic for Counterexample Hunter. No DOM access here.
+// Every claim is data plus a checker function, never prose alone.
+// Every function that picks at random takes an rng (a function returning a
+// number in [0, 1)) so the harness can drive it with a seeded generator.
+// When rng is omitted, Math.random is used.
+
+function makeRng(seed) {
+  var a = (seed >>> 0) || 1;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function rngOr(rng) { return (typeof rng === "function") ? rng : Math.random; }
+function rPick(rng, arr) { return arr[Math.floor(rngOr(rng)() * arr.length)]; }
+function rInt(rng, min, max) { return min + Math.floor(rngOr(rng)() * (max - min + 1)); }
+function rShuffle(rng, arr) {
+  var r = rngOr(rng);
+  for (var i = arr.length - 1; i > 0; i--) {
+    var j = Math.floor(r() * (i + 1));
+    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+
+// ---- Small pure helpers ----
+
+function approxEq(a, b) { return Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b)); }
+function isIntVal(x) { return typeof x === "number" && isFinite(x) && Math.abs(x - Math.round(x)) < 1e-9; }
+function isPrimeVal(x) {
+  if (!isIntVal(x)) return false;
+  var n = Math.round(x);
+  if (n < 2) return false;
+  for (var i = 2; i * i <= n; i++) { if (n % i === 0) return false; }
+  return true;
+}
+
+// Parser for student test values: integers, decimals, and simple fractions
+// such as 3/4 or -5/2. Returns NaN for anything else.
+function parseValue(str) {
+  if (str === null || str === undefined) return NaN;
+  var t = String(str).trim();
+  if (t === "") return NaN;
+  var frac = /^([+-]?\d+)\s*\/\s*([+-]?\d+)$/.exec(t);
+  if (frac) {
+    var den = parseInt(frac[2], 10);
+    if (den === 0) return NaN;
+    return parseInt(frac[1], 10) / den;
+  }
+  if (/^[+-]?(\d+(\.\d+)?|\.\d+)$/.test(t)) return Number(t);
+  return NaN;
+}
+
+// Shared options: why one counterexample settles a "for every" claim.
+var WHY_OPTIONS = [
+  { text: "A for every claim must hold in every allowed case, so one allowed case where it fails shows the claim cannot be true as stated.", correct: true },
+  { text: "One counterexample is enough because it is usually the biggest value tried, and bigger values count for more.", correct: false },
+  { text: "One counterexample is enough only when the same value also breaks a different claim.", correct: false }
+];
+
+function reasonOptions(good, bad1, bad2) {
+  return [
+    { text: good, correct: true },
+    { text: bad1, correct: false },
+    { text: bad2, correct: false }
+  ];
+}
+
+// ---- Mode 1: number claims ----
+// test(x) returns true when the claim HOLDS for the value x.
+// A value outside the stated domain, or outside the opening condition of an
+// if-then claim, does not test the claim, so test(x) returns true there.
+// inDomain(x) says whether x is a sensible test value at all.
+
+var NUMBER_CLAIMS = [
+  {
+    id: "N01", truth: "false", domainKind: "integer",
+    claimText: "If a number is divisible by 6, then it is divisible by 4.",
+    domainText: "For every integer n. Try values of n.",
+    inDomain: function (x) { return isIntVal(x); },
+    test: function (x) { if (!isIntVal(x)) return true; var n = Math.round(x); if (n % 6 !== 0) return true; return n % 4 === 0; },
+    witness: 6, friendly: [12, 20, 9],
+    hint: "Try small multiples of 6, one at a time, and check each one against 4.",
+    explain: "6 is divisible by 6, but 6 is not divisible by 4, so the conclusion fails for an allowed value.",
+    reasonOptions: null
+  },
+  {
+    id: "N02", truth: "true", domainKind: "integer",
+    claimText: "If a number is divisible by 6, then it is divisible by 3.",
+    domainText: "For every integer n. Try values of n.",
+    inDomain: function (x) { return isIntVal(x); },
+    test: function (x) { if (!isIntVal(x)) return true; var n = Math.round(x); if (n % 6 !== 0) return true; return n % 3 === 0; },
+    witness: null, friendly: [6, 12, 5],
+    hint: "Try multiples of 6, multiples of 3, and numbers that are neither.",
+    explain: "Every multiple of 6 is built from 2 times 3 times a whole number, so 3 is always one of its factors.",
+    reasonOptions: reasonOptions(
+      "Multiples of 6 always contain 3 as a factor, because 6 itself is 2 times 3, so divisibility by 3 comes along automatically.",
+      "It is true because the first ten multiples of 6 all worked when tested.",
+      "It is true because 6 and 3 are both small numbers, and small divisors usually work out.")
+  },
+  {
+    id: "N03", truth: "false", domainKind: "real",
+    claimText: "x squared is greater than x.",
+    domainText: "For every real number x.",
+    inDomain: function (x) { return typeof x === "number" && isFinite(x); },
+    test: function (x) { return x * x > x; },
+    witness: 0.5, friendly: [2, 3, -2],
+    hint: "Try a fraction between 0 and 1. Squaring a small fraction makes it smaller, not bigger.",
+    explain: "For x = 1/2, x squared is 1/4, and 1/4 is not greater than 1/2.",
+    reasonOptions: null
+  },
+  {
+    id: "N04", truth: "true", domainKind: "integer",
+    claimText: "n squared plus n is even.",
+    domainText: "For every integer n.",
+    inDomain: function (x) { return isIntVal(x); },
+    test: function (x) { if (!isIntVal(x)) return true; var n = Math.round(x); return ((n * n + n) % 2 + 2) % 2 === 0; },
+    witness: null, friendly: [1, 2, 3],
+    hint: "Try positive, negative, and zero values, odd and even.",
+    explain: "n squared plus n factors as n times (n plus 1). One of two neighbours in a row is always even, so the product is always even.",
+    reasonOptions: reasonOptions(
+      "n squared plus n is n times (n plus 1), and one of any two whole numbers in a row is even, so the product is always even.",
+      "It is true because odd answers and even answers take turns, and the even turns are the ones that matter.",
+      "It is true because squaring any number always gives an even result.")
+  },
+  {
+    id: "N05", truth: "true", domainKind: "real",
+    claimText: "(x minus 3) squared is greater than or equal to 0.",
+    domainText: "For every real number x.",
+    inDomain: function (x) { return typeof x === "number" && isFinite(x); },
+    test: function (x) { var d = x - 3; return d * d >= 0; },
+    witness: null, friendly: [3, 0, -4],
+    hint: "Try x = 3 itself, values near 3, fractions, and large negative values.",
+    explain: "Squaring any real number gives 0 or a positive result, never a negative one, and that includes x minus 3.",
+    reasonOptions: reasonOptions(
+      "A square of a real number is a number times itself, and a product of two numbers with the same sign is never negative.",
+      "It is true because the values tried so far came out positive, and positives are the usual case.",
+      "It is true because 3 is positive, so anything built from 3 stays positive.")
+  },
+  {
+    id: "N06", truth: "false", domainKind: "prime",
+    claimText: "If p is prime, then 2p plus 1 is prime.",
+    domainText: "For every prime number p. Try prime values of p.",
+    inDomain: function (x) { return isPrimeVal(x); },
+    test: function (x) { if (!isPrimeVal(x)) return true; return isPrimeVal(2 * Math.round(x) + 1); },
+    witness: 7, friendly: [2, 3, 5],
+    hint: "Work through the primes in order: 2, 3, 5, 7, and keep going. Do not stop at the first few that work.",
+    explain: "For p = 7, 2p plus 1 is 15, and 15 is 3 times 5, so it is not prime.",
+    reasonOptions: null
+  },
+  {
+    id: "N07", truth: "false", domainKind: "real",
+    claimText: "If x is less than 1, then x squared is less than 1.",
+    domainText: "For every real number x.",
+    inDomain: function (x) { return typeof x === "number" && isFinite(x); },
+    test: function (x) { if (!(x < 1)) return true; return x * x < 1; },
+    witness: -2, friendly: [0, 0.5, 0.9],
+    hint: "Try a negative value with a large size. Squaring it makes a large positive number.",
+    explain: "For x = -2, x is less than 1, but x squared is 4, and 4 is not less than 1.",
+    reasonOptions: null
+  },
+  {
+    id: "N08", truth: "false", domainKind: "integer",
+    claimText: "If n is odd, then 3 times n is even.",
+    domainText: "For every integer n. Try values of n.",
+    inDomain: function (x) { return isIntVal(x); },
+    test: function (x) { if (!isIntVal(x)) return true; var n = Math.round(x); if (((n % 2) + 2) % 2 === 0) return true; return ((3 * n) % 2 + 2) % 2 === 0; },
+    witness: 1, friendly: [2, 4, 6],
+    hint: "Try an odd starting value. An even starting value does not test this claim at all.",
+    explain: "For n = 1, n is odd, but 3 times 1 is 3, which is odd, not even.",
+    reasonOptions: null
+  },
+  {
+    id: "N09", truth: "false", domainKind: "positiveInteger",
+    claimText: "n squared plus n plus 1 is prime.",
+    domainText: "For every positive integer n.",
+    inDomain: function (x) { return isIntVal(x) && x > 0; },
+    test: function (x) { if (!(isIntVal(x) && x > 0)) return true; var n = Math.round(x); return isPrimeVal(n * n + n + 1); },
+    witness: 4, friendly: [1, 2, 3],
+    hint: "The first few values work. Keep going past n = 3 before deciding.",
+    explain: "For n = 4, n squared plus n plus 1 is 21, and 21 is 3 times 7, so it is not prime.",
+    reasonOptions: null
+  },
+  {
+    id: "N10", truth: "false", domainKind: "integer",
+    claimText: "Every integer is either positive or negative.",
+    domainText: "For every integer n. Try values of n, including the ones people tend to skip.",
+    inDomain: function (x) { return isIntVal(x); },
+    test: function (x) { if (!isIntVal(x)) return true; return x > 0 || x < 0; },
+    witness: 0, friendly: [1, -3, 7],
+    hint: "Try zero. Zero is an integer, and it is easy to overlook.",
+    explain: "0 is an integer, but 0 is neither positive nor negative.",
+    reasonOptions: null
+  },
+  {
+    id: "N11", truth: "true", domainKind: "integer",
+    claimText: "If a number is divisible by both 4 and 3, then it is divisible by 12.",
+    domainText: "For every integer n. Try values of n.",
+    inDomain: function (x) { return isIntVal(x); },
+    test: function (x) { if (!isIntVal(x)) return true; var n = Math.round(x); if (!(n % 4 === 0 && n % 3 === 0)) return true; return n % 12 === 0; },
+    witness: null, friendly: [12, 24, 6],
+    hint: "Try common multiples of 4 and 3, and numbers divisible by only one of them.",
+    explain: "A number divisible by 4 and by 3 is a common multiple of 4 and 3, and the least common multiple of 4 and 3 is 12, so every such number is a multiple of 12.",
+    reasonOptions: reasonOptions(
+      "Divisible by 4 and by 3 means the number is a common multiple of 4 and 3, and every common multiple of 4 and 3 is a multiple of their least common multiple, 12.",
+      "It is true because 4 plus 3 is close to 12, so the divisibility roughly carries over.",
+      "It is true because multiples of 12 are common, so most numbers tested happen to qualify.")
+  },
+  {
+    id: "N12", truth: "false", domainKind: "positiveReal",
+    claimText: "1 divided by x is less than x.",
+    domainText: "For every positive real number x.",
+    inDomain: function (x) { return typeof x === "number" && isFinite(x) && x > 0; },
+    test: function (x) { if (!(typeof x === "number" && isFinite(x) && x > 0)) return true; return 1 / x < x; },
+    witness: 0.5, friendly: [2, 3, 10],
+    hint: "Try a positive fraction smaller than 1. Taking 1 divided by a small fraction gives a large result.",
+    explain: "For x = 1/2, 1 divided by x is 2, and 2 is not less than 1/2.",
+    reasonOptions: null
+  }
+];
+
+// ---- Mode 2: rectangle claims ----
+// Each claim is a condition and a conclusion on a pair of rectangles.
+// A counterexample is a pair where the condition is true and the
+// conclusion is false.
+
+function rectPerimeter(r) { return 2 * (r.l + r.w); }
+function rectArea(r) { return r.l * r.w; }
+function rectIsCounterexample(claim, a, b) { return claim.condition(a, b) && !claim.conclusion(a, b); }
+function rectClaimHolds(claim, a, b) { return !rectIsCounterexample(claim, a, b); }
+
+var RECT_CLAIMS = [
+  {
+    id: "R01", truth: "false",
+    claimText: "Two rectangles with the same perimeter always have the same area.",
+    condition: function (a, b) { return approxEq(rectPerimeter(a), rectPerimeter(b)); },
+    conclusion: function (a, b) { return approxEq(rectArea(a), rectArea(b)); },
+    witnessPair: { a: { l: 1, w: 4 }, b: { l: 2, w: 3 } },
+    hint: "Keep the perimeter fixed and change the shape: compare a long thin rectangle with a squarer one on the same perimeter.",
+    explain: "A 1 by 4 rectangle and a 2 by 3 rectangle both have perimeter 10, but their areas are 4 and 6.",
+    reasonOptions: null
+  },
+  {
+    id: "R02", truth: "false",
+    claimText: "If rectangle B has a larger perimeter than rectangle A, then rectangle B has a larger area than rectangle A.",
+    condition: function (a, b) { return rectPerimeter(b) > rectPerimeter(a) && !approxEq(rectPerimeter(b), rectPerimeter(a)); },
+    conclusion: function (a, b) { return rectArea(b) > rectArea(a); },
+    witnessPair: { a: { l: 5, w: 5 }, b: { l: 9, w: 2 } },
+    hint: "Make B long and thin so its perimeter grows while its area stays small, and make A a square.",
+    explain: "A 5 by 5 square has perimeter 20 and area 25. A 9 by 2 rectangle has the larger perimeter 22, but the smaller area 18.",
+    reasonOptions: null
+  },
+  {
+    id: "R03", truth: "true",
+    claimText: "If a rectangle's length and width are both doubled to make rectangle B from rectangle A, then the perimeter of B is double the perimeter of A.",
+    condition: function (a, b) { return approxEq(b.l, 2 * a.l) && approxEq(b.w, 2 * a.w); },
+    conclusion: function (a, b) { return approxEq(rectPerimeter(b), 2 * rectPerimeter(a)); },
+    witnessPair: null,
+    hint: "Set B to exactly double A in both directions, for several different starting rectangles, plain and awkward ones.",
+    explain: "Perimeter is 2 times (length plus width). Doubling both parts doubles the sum inside, so the whole perimeter doubles.",
+    reasonOptions: reasonOptions(
+      "Perimeter is 2 times (length plus width). Doubling the length and the width doubles the sum, and doubling the sum doubles the perimeter, for any starting rectangle.",
+      "It is true because the pairs tried so far all doubled cleanly, so the pattern should keep going.",
+      "It is true because doubling anything about a rectangle doubles everything about it, including its area.")
+  }
+];
+
+// ---- Mode 3: reverse mode, repairs ----
+// Each entry shows a broken claim and its counterexample. Each repair has
+// its own checker. The correct repair holds across its whole domain and
+// deals with the original witness: the witness is outside the repaired
+// domain or opening condition, or the repaired claim holds for it.
+
+function scaledUpPair(a, b) {
+  // True when one rectangle is the other with both sides multiplied by
+  // the same factor greater than 1.
+  function scaled(from, to) {
+    if (from.l <= 0 || from.w <= 0) return false;
+    var k1 = to.l / from.l, k2 = to.w / from.w;
+    return k1 > 1 && approxEq(k1, k2);
+  }
+  return scaled(a, b) || scaled(b, a);
+}
+
+var REVERSE_ENTRIES = [
+  {
+    id: "V01", kind: "number",
+    claimText: "If a number is divisible by 6, then it is divisible by 4.",
+    witnessText: "Counterexample: 6. It is divisible by 6, but it is not divisible by 4.",
+    witness: 6,
+    repairs: [
+      { text: "If a number is divisible by 12, then it is divisible by 4.", correct: true,
+        test: function (x) { if (!isIntVal(x)) return true; var n = Math.round(x); if (n % 12 !== 0) return true; return n % 4 === 0; } },
+      { text: "If a number is divisible by 6, then it is divisible by 8.", correct: false,
+        test: function (x) { if (!isIntVal(x)) return true; var n = Math.round(x); if (n % 6 !== 0) return true; return n % 8 === 0; } },
+      { text: "If a number is divisible by 2, then it is divisible by 4.", correct: false,
+        test: function (x) { if (!isIntVal(x)) return true; var n = Math.round(x); if (n % 2 !== 0) return true; return n % 4 === 0; } }
+    ]
+  },
+  {
+    id: "V02", kind: "number",
+    claimText: "x squared is greater than x, for every real number x.",
+    witnessText: "Counterexample: x = 1/2. Its square is 1/4, and 1/4 is not greater than 1/2.",
+    witness: 0.5,
+    repairs: [
+      { text: "For every real number x greater than 1, x squared is greater than x.", correct: true,
+        test: function (x) { if (!(x > 1)) return true; return x * x > x; } },
+      { text: "For every real number x, x squared is greater than or equal to x.", correct: false,
+        test: function (x) { return x * x >= x; } },
+      { text: "For every real number x except 0, x squared is greater than x.", correct: false,
+        test: function (x) { if (x === 0) return true; return x * x > x; } }
+    ]
+  },
+  {
+    id: "V03", kind: "number",
+    claimText: "If p is prime, then 2p plus 1 is prime.",
+    witnessText: "Counterexample: p = 7. Then 2p plus 1 is 15, which is 3 times 5.",
+    witness: 7,
+    repairs: [
+      { text: "If p is prime, then 2p plus 1 is odd.", correct: true,
+        test: function (x) { if (!isPrimeVal(x)) return true; return ((2 * Math.round(x) + 1) % 2 + 2) % 2 === 1; } },
+      { text: "If p is a prime smaller than 20, then 2p plus 1 is prime.", correct: false,
+        test: function (x) { if (!isPrimeVal(x)) return true; if (!(Math.round(x) < 20)) return true; return isPrimeVal(2 * Math.round(x) + 1); } },
+      { text: "If p is prime, then 2p plus 3 is prime.", correct: false,
+        test: function (x) { if (!isPrimeVal(x)) return true; return isPrimeVal(2 * Math.round(x) + 3); } }
+    ]
+  },
+  {
+    id: "V04", kind: "number",
+    claimText: "If x is less than 1, then x squared is less than 1, for every real number x.",
+    witnessText: "Counterexample: x = -2. It is less than 1, but its square is 4, which is not less than 1.",
+    witness: -2,
+    repairs: [
+      { text: "If x is greater than -1 and less than 1, then x squared is less than 1.", correct: true,
+        test: function (x) { if (!(x > -1 && x < 1)) return true; return x * x < 1; } },
+      { text: "If x is less than 2, then x squared is less than 1.", correct: false,
+        test: function (x) { if (!(x < 2)) return true; return x * x < 1; } },
+      { text: "If x is less than or equal to 1, then x squared is less than or equal to 1.", correct: false,
+        test: function (x) { if (!(x <= 1)) return true; return x * x <= 1; } }
+    ]
+  },
+  {
+    id: "V05", kind: "rectangle",
+    claimText: "Two rectangles with the same perimeter always have the same area.",
+    witnessText: "Counterexample pair: A is 1 by 4 and B is 2 by 3. Both have perimeter 10, but the areas are 4 and 6.",
+    witnessPair: { a: { l: 1, w: 4 }, b: { l: 2, w: 3 } },
+    repairs: [
+      { text: "Two rectangles with the same perimeter and the same length always have the same area.", correct: true,
+        testRect: function (a, b) {
+          if (!(approxEq(rectPerimeter(a), rectPerimeter(b)) && approxEq(a.l, b.l))) return true;
+          return approxEq(rectArea(a), rectArea(b));
+        } },
+      { text: "Two rectangles with the same perimeter always have areas that differ by at most 5.", correct: false,
+        testRect: function (a, b) {
+          if (!approxEq(rectPerimeter(a), rectPerimeter(b))) return true;
+          return Math.abs(rectArea(a) - rectArea(b)) <= 5;
+        } },
+      { text: "Two rectangles with the same perimeter always have the same area, as long as at least one of them is a square.", correct: false,
+        testRect: function (a, b) {
+          var oneSquare = approxEq(a.l, a.w) || approxEq(b.l, b.w);
+          if (!(approxEq(rectPerimeter(a), rectPerimeter(b)) && oneSquare)) return true;
+          return approxEq(rectArea(a), rectArea(b));
+        } }
+    ]
+  },
+  {
+    id: "V06", kind: "rectangle",
+    claimText: "If rectangle B has a larger perimeter than rectangle A, then rectangle B has a larger area than rectangle A.",
+    witnessText: "Counterexample pair: A is 5 by 5, perimeter 20 and area 25. B is 9 by 2, perimeter 22 and area 18.",
+    witnessPair: { a: { l: 5, w: 5 }, b: { l: 9, w: 2 } },
+    repairs: [
+      { text: "If rectangle B is made from rectangle A by multiplying both sides by the same factor greater than 1, or the other way round, then the rectangle with the larger perimeter has the larger area.", correct: true,
+        testRect: function (a, b) {
+          if (!scaledUpPair(a, b)) return true;
+          if (rectPerimeter(b) > rectPerimeter(a)) return rectArea(b) > rectArea(a);
+          if (rectPerimeter(a) > rectPerimeter(b)) return rectArea(a) > rectArea(b);
+          return approxEq(rectArea(a), rectArea(b));
+        } },
+      { text: "If rectangle B has a larger perimeter and a longer length than rectangle A, then rectangle B has a larger area than rectangle A.", correct: false,
+        testRect: function (a, b) {
+          if (!(rectPerimeter(b) > rectPerimeter(a) && b.l > a.l)) return true;
+          return rectArea(b) > rectArea(a);
+        } },
+      { text: "If rectangle B has a larger perimeter than rectangle A and the width of B is at least 2, then rectangle B has a larger area than rectangle A.", correct: false,
+        testRect: function (a, b) {
+          if (!(rectPerimeter(b) > rectPerimeter(a) && b.w >= 2)) return true;
+          return rectArea(b) > rectArea(a);
+        } }
+    ]
+  }
+];
+
+// ---- Serving ----
+
+function serveNumberClaim(rng) { return rPick(rng, NUMBER_CLAIMS); }
+function serveRectangleClaim(rng) { return rPick(rng, RECT_CLAIMS); }
+function serveReverseEntry(rng) { return rPick(rng, REVERSE_ENTRIES); }
+
+// A mixed sweep of values for checking repairs in the app and the harness:
+// integers, halves, thirds, and fifths.
+function numberSweepValues() {
+  var vals = [], seen = {}, k, v;
+  function add(x) { var key = String(Math.round(x * 1000000)); if (!seen[key]) { seen[key] = 1; vals.push(x); } }
+  for (k = -60; k <= 60; k++) add(k);
+  for (k = -120; k <= 120; k++) add(k / 2);
+  for (k = -120; k <= 120; k++) add(k / 3);
+  for (k = -250; k <= 250; k++) add(k / 5);
+  return vals;
+}
+// ==END GENERATOR==
+
+// ---- UI ----
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function fmtVal(x) {
+  if (typeof x !== "number" || !isFinite(x)) return String(x);
+  if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x));
+  return String(Math.round(x * 10000) / 10000);
+}
+function showFeedback(el, html, cls) { el.innerHTML = html; el.className = "feedback show " + cls; }
+function hideFeedback(el) { el.innerHTML = ""; el.className = "feedback"; }
+function checkedPick(name) {
+  var els = document.querySelectorAll("input[name='" + name + "']");
+  for (var i = 0; i < els.length; i++) if (els[i].checked) return parseInt(els[i].value, 10);
+  return -1;
+}
+function renderOptions(container, name, options) {
+  container.innerHTML = "";
+  options.forEach(function (o, i) {
+    var lab = document.createElement("label");
+    lab.className = "pickopt";
+    lab.innerHTML = "<input type=\"radio\" name=\"" + name + "\" value=\"" + i + "\"> <span>" + esc(o.text) + "</span>";
+    container.appendChild(lab);
+  });
+}
+function shuffledCopy(arr) {
+  var copy = arr.slice();
+  for (var i = copy.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = copy[i]; copy[i] = copy[j]; copy[j] = t;
+  }
+  return copy;
+}
+
+var state = {
+  mode: "number",
+  number: null, numberTests: [], numberSeen: {}, numberSensible: 0, numberBrokenValue: null, numberWhy: null,
+  rect: null, rectTests: [], rectSeen: {}, rectSensible: 0, rectBrokenPair: null, rectWhy: null,
+  reverse: null,
+  records: []
+};
+
+function setMode(mode) {
+  state.mode = mode;
+  $("panelNumber").classList.toggle("hidden", mode !== "number");
+  $("panelRect").classList.toggle("hidden", mode !== "rect");
+  $("panelReverse").classList.toggle("hidden", mode !== "reverse");
+  [["modeNumber", "number"], ["modeRect", "rect"], ["modeReverse", "reverse"]].forEach(function (pair) {
+    var on = pair[1] === mode;
+    $(pair[0]).setAttribute("aria-pressed", String(on));
+    $(pair[0]).classList.toggle("secondary", !on);
+  });
+}
+$("modeNumber").addEventListener("click", function () { setMode("number"); });
+$("modeRect").addEventListener("click", function () { setMode("rect"); });
+$("modeReverse").addEventListener("click", function () { setMode("reverse"); });
+
+// ---- Record sheet ----
+
+function renderRecord() {
+  var body = $("dsBody");
+  if (!state.records.length) {
+    body.innerHTML = "<p>No resolved claim yet. Resolve a claim above and your work will appear here.</p>";
+    return;
+  }
+  var html = "<table><tr><th>Claim</th><th>What was found</th><th>My explanation</th></tr>";
+  state.records.forEach(function (r) {
+    html += "<tr><td>" + esc(r.claim) + "</td><td>" + esc(r.found) + "</td><td>" + esc(r.explanation) + "</td></tr>";
+  });
+  html += "</table>";
+  body.innerHTML = html;
+}
+$("printBtn").addEventListener("click", function () { window.print(); });
+
+// ---- Mode 1 UI: Number Lab ----
+
+function newNumberClaim() {
+  state.number = serveNumberClaim(Math.random);
+  state.numberTests = []; state.numberSeen = {}; state.numberSensible = 0; state.numberBrokenValue = null;
+  $("nClaim").textContent = "Claim: " + state.number.claimText;
+  $("nDomain").textContent = state.number.domainText;
+  $("nInput").value = "";
+  $("nExplain").value = "";
+  $("nWhyWrap").classList.add("hidden");
+  $("nReasonWrap").classList.add("hidden");
+  hideFeedback($("nFeedback")); hideFeedback($("nHintBox"));
+  renderNumberLog();
+}
+function renderNumberLog() {
+  var wrap = $("nLogWrap");
+  if (!state.numberTests.length) { wrap.innerHTML = ""; return; }
+  var rows = state.numberTests.map(function (t) {
+    return "<tr><td>" + esc(t.entered) + "</td><td>" + esc(fmtVal(t.value)) + "</td><td>" + esc(t.result) + "</td></tr>";
+  }).join("");
+  wrap.innerHTML = "<h3>Tests so far (" + state.numberSensible + " sensible test" + (state.numberSensible === 1 ? "" : "s") + ")</h3>" +
+    "<table class=\"plan\"><tr><th>Entered</th><th>Value</th><th>Result</th></tr>" + rows + "</table>";
+}
+$("nHint").addEventListener("click", function () {
+  showFeedback($("nHintBox"), "<p class=\"sumline\">Hint</p><p>" + esc(state.number.hint) + "</p>", "info");
+});
+$("nTest").addEventListener("click", function () {
+  var claim = state.number, fb = $("nFeedback");
+  if (state.numberBrokenValue !== null) {
+    showFeedback(fb, "<p class=\"sumline\">This claim is already broken.</p><p>Finish the explanation step below to add the find to the record, or start a new claim.</p>", "info");
+    return;
+  }
+  var raw = $("nInput").value;
+  var v = parseValue(raw);
+  if (isNaN(v)) {
+    showFeedback(fb, "<p class=\"sumline\">That is not a value I can test.</p><p>Type an integer, a decimal, or a simple fraction such as 3/4 or -5/2.</p>", "info");
+    return;
+  }
+  if (!claim.inDomain(v)) {
+    state.numberTests.push({ entered: raw, value: v, result: "Outside the domain, so it does not test the claim" });
+    renderNumberLog();
+    showFeedback(fb, "<p class=\"sumline\">That value is outside the domain of this claim.</p><p>" + esc(claim.domainText) + " A test only counts when the value is allowed.</p>", "info");
+    return;
+  }
+  var key = fmtVal(v);
+  var isNew = !state.numberSeen[key];
+  if (isNew) { state.numberSeen[key] = 1; state.numberSensible++; }
+  if (claim.test(v)) {
+    state.numberTests.push({ entered: raw, value: v, result: "Claim holds for this value" });
+    renderNumberLog();
+    showFeedback(fb, "<p class=\"sumline\">The claim holds for " + esc(key) + ".</p><p>That is one case in favour, but a for every claim is only settled by a case that breaks it, or by a general reason. Keep hunting" + (state.numberSensible >= 5 ? ", or use the true verdict button if you are ready to defend it" : "") + ".</p>", "info");
+  } else {
+    state.numberTests.push({ entered: raw, value: v, result: "Claim BREAKS for this value" });
+    state.numberBrokenValue = v;
+    renderNumberLog();
+    state.numberWhy = shuffledCopy(WHY_OPTIONS);
+    renderOptions($("nWhyOptions"), "nWhy", state.numberWhy);
+    $("nWhyWrap").classList.remove("hidden");
+    showFeedback(fb, "<p class=\"sumline\">You found a counterexample: " + esc(key) + ".</p><p>" + esc(claim.explain) + " Now pick why one case like this is enough, and write your own explanation below.</p>", "ok");
+  }
+});
+$("nResolve").addEventListener("click", function () {
+  var claim = state.number, fb = $("nFeedback");
+  var pick = checkedPick("nWhy");
+  if (pick < 0 || !state.numberWhy[pick].correct) {
+    showFeedback(fb, "<p class=\"sumline\">That explanation is not the one that settles it.</p><p>Think about what a for every claim promises: it promises the result in every allowed case, with no exceptions.</p>", "bad");
+    return;
+  }
+  var own = $("nExplain").value.trim();
+  if (own.length < 10) {
+    showFeedback(fb, "<p class=\"sumline\">Write your own explanation first.</p><p>A sentence or two in your own words is what makes this record yours.</p>", "info");
+    return;
+  }
+  state.records.push({
+    claim: claim.claimText,
+    found: "Counterexample found: " + fmtVal(state.numberBrokenValue) + ". " + claim.explain,
+    explanation: own
+  });
+  renderRecord();
+  $("nWhyWrap").classList.add("hidden");
+  showFeedback(fb, "<p class=\"sumline\">Added to the record.</p><p>Start a new claim when you are ready.</p>", "ok");
+});
+$("nTrue").addEventListener("click", function () {
+  var claim = state.number, fb = $("nFeedback");
+  if (state.numberSensible < 5) {
+    showFeedback(fb, "<p class=\"sumline\">Not yet: run at least 5 distinct sensible tests first.</p><p>You have " + state.numberSensible + " so far. Spread them out: try different kinds of values, not close neighbours only.</p>", "info");
+    return;
+  }
+  if (claim.truth !== "true") {
+    showFeedback(fb, "<p class=\"sumline\">That verdict does not hold up.</p><p>This claim does break somewhere. Use the hint, change the kind of value you are trying, and keep hunting.</p>", "bad");
+    return;
+  }
+  state.numberReason = shuffledCopy(claim.reasonOptions);
+  renderOptions($("nReasonOptions"), "nReason", state.numberReason);
+  $("nReasonWrap").classList.remove("hidden");
+  showFeedback(fb, "<p class=\"sumline\">Defend the verdict.</p><p>Pick the general reason that covers every allowed case.</p>", "info");
+});
+$("nReasonCheck").addEventListener("click", function () {
+  var claim = state.number, fb = $("nFeedback");
+  var pick = checkedPick("nReason");
+  if (pick < 0 || !state.numberReason[pick].correct) {
+    showFeedback(fb, "<p class=\"sumline\">That reason does not cover every case.</p><p>A pile of working examples is inductive evidence. A true verdict needs a reason that works for an arbitrary allowed value.</p>", "bad");
+    return;
+  }
+  state.records.push({
+    claim: claim.claimText,
+    found: "Verdict: true, after " + state.numberSensible + " distinct sensible tests with no counterexample.",
+    explanation: claim.explain
+  });
+  renderRecord();
+  $("nReasonWrap").classList.add("hidden");
+  showFeedback(fb, "<p class=\"sumline\">Verdict accepted and added to the record.</p><p>" + esc(claim.explain) + "</p>", "ok");
+});
+$("nNew").addEventListener("click", newNumberClaim);
+
+// ---- Mode 2 UI: Rectangle Lab ----
+
+function readRect(idL, idW) {
+  var l = parseFloat($(idL).value), w = parseFloat($(idW).value);
+  if (isNaN(l) || isNaN(w) || l <= 0 || w <= 0) return null;
+  return { l: l, w: w };
+}
+function updateRectStats() {
+  var a = readRect("rLenA", "rWidA"), b = readRect("rLenB", "rWidB");
+  $("rStatsA").textContent = a ? ("Perimeter: " + fmtVal(rectPerimeter(a)) + " | Area: " + fmtVal(rectArea(a))) : "Enter positive lengths.";
+  $("rStatsB").textContent = b ? ("Perimeter: " + fmtVal(rectPerimeter(b)) + " | Area: " + fmtVal(rectArea(b))) : "Enter positive lengths.";
+}
+["rLenA", "rWidA", "rLenB", "rWidB"].forEach(function (id) { $(id).addEventListener("input", updateRectStats); });
+
+function newRectClaim() {
+  state.rect = serveRectangleClaim(Math.random);
+  state.rectTests = []; state.rectSeen = {}; state.rectSensible = 0; state.rectBrokenPair = null;
+  $("rClaim").textContent = "Claim: " + state.rect.claimText;
+  $("rExplain").value = "";
+  $("rWhyWrap").classList.add("hidden");
+  $("rReasonWrap").classList.add("hidden");
+  hideFeedback($("rFeedback")); hideFeedback($("rHintBox"));
+  renderRectLog();
+  updateRectStats();
+}
+function pairText(a, b) {
+  return "A " + fmtVal(a.l) + " by " + fmtVal(a.w) + " (perimeter " + fmtVal(rectPerimeter(a)) + ", area " + fmtVal(rectArea(a)) + ") and B " +
+    fmtVal(b.l) + " by " + fmtVal(b.w) + " (perimeter " + fmtVal(rectPerimeter(b)) + ", area " + fmtVal(rectArea(b)) + ")";
+}
+function renderRectLog() {
+  var wrap = $("rLogWrap");
+  if (!state.rectTests.length) { wrap.innerHTML = ""; return; }
+  var rows = state.rectTests.map(function (t) {
+    return "<tr><td>" + esc(t.pair) + "</td><td>" + esc(t.result) + "</td></tr>";
+  }).join("");
+  wrap.innerHTML = "<h3>Pairs checked (" + state.rectSensible + " pair" + (state.rectSensible === 1 ? "" : "s") + " meeting the condition)</h3>" +
+    "<table class=\"plan\"><tr><th>Pair</th><th>Result</th></tr>" + rows + "</table>";
+}
+$("rHint").addEventListener("click", function () {
+  showFeedback($("rHintBox"), "<p class=\"sumline\">Hint</p><p>" + esc(state.rect.hint) + "</p>", "info");
+});
+$("rCheck").addEventListener("click", function () {
+  var claim = state.rect, fb = $("rFeedback");
+  updateRectStats();
+  if (state.rectBrokenPair) {
+    showFeedback(fb, "<p class=\"sumline\">This claim is already broken.</p><p>Finish the explanation step below, or start a new claim.</p>", "info");
+    return;
+  }
+  var a = readRect("rLenA", "rWidA"), b = readRect("rLenB", "rWidB");
+  if (!a || !b) {
+    showFeedback(fb, "<p class=\"sumline\">Both rectangles need positive lengths and widths.</p>", "info");
+    return;
+  }
+  var text = pairText(a, b);
+  if (!claim.condition(a, b)) {
+    state.rectTests.push({ pair: text, result: "Condition not met, so this pair does not test the claim" });
+    renderRectLog();
+    showFeedback(fb, "<p class=\"sumline\">This pair does not test the claim.</p><p>The condition of the claim is not met for this pair, so the claim makes no promise here. Adjust the rectangles until the condition holds.</p>", "info");
+    return;
+  }
+  var key = [a.l, a.w, b.l, b.w].join(",");
+  if (!state.rectSeen[key]) { state.rectSeen[key] = 1; state.rectSensible++; }
+  if (rectIsCounterexample(claim, a, b)) {
+    state.rectTests.push({ pair: text, result: "Claim BREAKS for this pair" });
+    state.rectBrokenPair = { a: a, b: b };
+    renderRectLog();
+    state.rectWhy = shuffledCopy(WHY_OPTIONS);
+    renderOptions($("rWhyOptions"), "rWhy", state.rectWhy);
+    $("rWhyWrap").classList.remove("hidden");
+    showFeedback(fb, "<p class=\"sumline\">You found a counterexample pair.</p><p>" + esc(text) + ". The condition holds and the conclusion fails. Now pick why one pair is enough, and write your own explanation below.</p>", "ok");
+  } else {
+    state.rectTests.push({ pair: text, result: "Claim holds for this pair" });
+    renderRectLog();
+    showFeedback(fb, "<p class=\"sumline\">The claim holds for this pair.</p><p>" + esc(text) + ". Keep hunting for a pair that meets the condition and breaks the conclusion" + (state.rectSensible >= 5 ? ", or use the true verdict button if you are ready to defend it" : "") + ".</p>", "info");
+  }
+});
+$("rResolve").addEventListener("click", function () {
+  var claim = state.rect, fb = $("rFeedback");
+  var pick = checkedPick("rWhy");
+  if (pick < 0 || !state.rectWhy[pick].correct) {
+    showFeedback(fb, "<p class=\"sumline\">That explanation is not the one that settles it.</p><p>The claim promises the conclusion every time the condition is met. This pair met the condition, and the conclusion failed.</p>", "bad");
+    return;
+  }
+  var own = $("rExplain").value.trim();
+  if (own.length < 10) {
+    showFeedback(fb, "<p class=\"sumline\">Write your own explanation first.</p><p>A sentence or two in your own words is what makes this record yours.</p>", "info");
+    return;
+  }
+  state.records.push({
+    claim: claim.claimText,
+    found: "Counterexample pair found: " + pairText(state.rectBrokenPair.a, state.rectBrokenPair.b) + ". " + claim.explain,
+    explanation: own
+  });
+  renderRecord();
+  $("rWhyWrap").classList.add("hidden");
+  showFeedback(fb, "<p class=\"sumline\">Added to the record.</p><p>Start a new claim when you are ready.</p>", "ok");
+});
+$("rTrue").addEventListener("click", function () {
+  var claim = state.rect, fb = $("rFeedback");
+  if (state.rectSensible < 5) {
+    showFeedback(fb, "<p class=\"sumline\">Not yet: check at least 5 distinct pairs that meet the condition first.</p><p>You have " + state.rectSensible + " so far. Pairs that miss the condition do not count.</p>", "info");
+    return;
+  }
+  if (claim.truth !== "true") {
+    showFeedback(fb, "<p class=\"sumline\">That verdict does not hold up.</p><p>This claim does break for some pair that meets the condition. Use the hint and change the shape, not just the size.</p>", "bad");
+    return;
+  }
+  state.rectReason = shuffledCopy(claim.reasonOptions);
+  renderOptions($("rReasonOptions"), "rReason", state.rectReason);
+  $("rReasonWrap").classList.remove("hidden");
+  showFeedback(fb, "<p class=\"sumline\">Defend the verdict.</p><p>Pick the general reason that covers every allowed pair.</p>", "info");
+});
+$("rReasonCheck").addEventListener("click", function () {
+  var claim = state.rect, fb = $("rFeedback");
+  var pick = checkedPick("rReason");
+  if (pick < 0 || !state.rectReason[pick].correct) {
+    showFeedback(fb, "<p class=\"sumline\">That reason does not cover every pair.</p><p>Watch out for the area trap: doubling the sides does not double the area, so a reason that says everything doubles is wrong even when its perimeter part is right.</p>", "bad");
+    return;
+  }
+  state.records.push({
+    claim: claim.claimText,
+    found: "Verdict: true, after " + state.rectSensible + " distinct pairs meeting the condition, with no counterexample.",
+    explanation: claim.explain
+  });
+  renderRecord();
+  $("rReasonWrap").classList.add("hidden");
+  showFeedback(fb, "<p class=\"sumline\">Verdict accepted and added to the record.</p><p>" + esc(claim.explain) + "</p>", "ok");
+});
+$("rNew").addEventListener("click", newRectClaim);
+
+// ---- Mode 3 UI: Reverse Mode ----
+
+function newReverseEntry() {
+  state.reverse = serveReverseEntry(Math.random);
+  var entry = state.reverse;
+  $("vClaim").textContent = "Broken claim: " + entry.claimText;
+  $("vWitness").textContent = entry.witnessText;
+  state.reverseOptions = shuffledCopy(entry.repairs);
+  renderOptions($("vOptions"), "vPick", state.reverseOptions);
+  hideFeedback($("vFeedback"));
+}
+function firstFailingNumber(repair) {
+  var vals = numberSweepValues();
+  for (var i = 0; i < vals.length; i++) { if (!repair.test(vals[i])) return vals[i]; }
+  return null;
+}
+function firstFailingPair(repair) {
+  var sizes = [1, 2, 3, 4, 5, 6, 8, 9, 10];
+  for (var i = 0; i < sizes.length; i++) for (var j = 0; j < sizes.length; j++)
+    for (var k = 0; k < sizes.length; k++) for (var m = 0; m < sizes.length; m++) {
+      var a = { l: sizes[i], w: sizes[j] }, b = { l: sizes[k], w: sizes[m] };
+      if (!repair.testRect(a, b)) return { a: a, b: b };
+    }
+  return null;
+}
+$("vVerify").addEventListener("click", function () {
+  var entry = state.reverse, fb = $("vFeedback");
+  var pick = checkedPick("vPick");
+  if (pick < 0) {
+    showFeedback(fb, "<p class=\"sumline\">Pick a repair first, then verify.</p>", "info");
+    return;
+  }
+  var repair = state.reverseOptions[pick];
+  if (entry.kind === "number") {
+    var fail = firstFailingNumber(repair);
+    var witnessNote = repair.test(entry.witness)
+      ? "The original counterexample, " + fmtVal(entry.witness) + ", no longer breaks it: it is outside the repaired domain or condition, or the repaired claim holds for it."
+      : "The original counterexample, " + fmtVal(entry.witness) + ", still breaks it.";
+    if (repair.correct && fail === null) {
+      state.records.push({
+        claim: entry.claimText,
+        found: "Repaired claim: " + repair.text,
+        explanation: "Verified on a sweep of test values. " + witnessNote
+      });
+      renderRecord();
+      showFeedback(fb, "<p class=\"sumline\">That repair holds.</p><p>It survived a sweep of " + numberSweepValues().length + " values, integers, halves, thirds, and fifths. " + esc(witnessNote) + " Added to the record.</p>", "ok");
+    } else {
+      var where = fail !== null ? " It fails at " + fmtVal(fail) + "." : "";
+      showFeedback(fb, "<p class=\"sumline\">That repair does not fix the claim.</p><p>" + esc(witnessNote + where) + " A repair has to hold for every allowed case, so one failing case sends it back. Try another repair.</p>", "bad");
+    }
+  } else {
+    var failPair = firstFailingPair(repair);
+    var witnessOk = repair.testRect(entry.witnessPair.a, entry.witnessPair.b);
+    var witnessNoteR = witnessOk
+      ? "The original counterexample pair no longer breaks it."
+      : "The original counterexample pair still breaks it.";
+    if (repair.correct && failPair === null) {
+      state.records.push({
+        claim: entry.claimText,
+        found: "Repaired claim: " + repair.text,
+        explanation: "Verified on a sweep of rectangle pairs. " + witnessNoteR
+      });
+      renderRecord();
+      showFeedback(fb, "<p class=\"sumline\">That repair holds.</p><p>It survived a sweep of rectangle pairs with whole number sides. " + esc(witnessNoteR) + " Added to the record.</p>", "ok");
+    } else {
+      var whereR = failPair ? " It fails for this pair: " + pairText(failPair.a, failPair.b) + "." : "";
+      showFeedback(fb, "<p class=\"sumline\">That repair does not fix the claim.</p><p>" + esc(witnessNoteR + whereR) + " Try another repair.</p>", "bad");
+    }
+  }
+});
+$("vNew").addEventListener("click", newReverseEntry);
+
+// Start
+newNumberClaim();
+newRectClaim();
+newReverseEntry();
+renderRecord();
+</script>
+</body>
+</html>
